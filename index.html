@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo da Velha by Marlon Ramos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .cell {
+            transition: all 0.3s ease;
+        }
+        
+        .cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+        
+        .winning-cell {
+            background-color: rgba(16, 185, 129, 0.3);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+        
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="max-w-md w-full mx-auto">
+        <h1 class="text-4xl font-bold text-center mb-2 text-blue-400 fade-in">
+            <i class="fas fa-times-circle mr-2"></i>
+            Jogo da Velha
+            <i class="fas fa-circle-notch ml-2"></i>
+        </h1>
+        <p class="text-center text-gray-400 mb-8 fade-in">by Marlon Ramos</p>
+        
+        <div class="bg-gray-800 rounded-xl p-6 shadow-xl mb-8 fade-in">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center">
+                    <span class="text-xl font-semibold mr-3">Jogador:</span>
+                    <span id="player-symbol" class="text-2xl font-bold text-blue-400">X</span>
+                </div>
+                <div class="flex items-center">
+                    <span class="text-xl font-semibold mr-3">Computador:</span>
+                    <span id="computer-symbol" class="text-2xl font-bold text-green-400">O</span>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="0"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="1"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="2"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="3"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="4"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="5"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="6"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="7"></div>
+                <div class="cell bg-gray-700 rounded-lg h-24 flex items-center justify-center text-5xl font-bold cursor-pointer hover:bg-gray-600" data-index="8"></div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Dificuldade:</label>
+                    <select id="difficulty" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="easy">Fácil</option>
+                        <option value="medium" selected>Intermediário</option>
+                        <option value="hard">Avançado</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-sm font-medium mb-2">Você joga como:</label>
+                    <select id="player-role" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="X" selected>X (Primeiro)</option>
+                        <option value="O">O (Segundo)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="flex justify-between">
+                <button id="reset-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-redo mr-2"></i> Reiniciar
+                </button>
+                <button id="new-game-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg transition duration-200 flex items-center">
+                    <i class="fas fa-plus-circle mr-2"></i> Novo Jogo
+                </button>
+            </div>
+        </div>
+        
+        <div id="message" class="text-center text-xl font-semibold mb-4 hidden"></div>
+        
+        <div class="bg-gray-800 rounded-xl p-6 shadow-xl fade-in">
+            <h2 class="text-xl font-bold mb-4 text-center text-purple-400">Estatísticas</h2>
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <div class="text-sm text-gray-400">Vitórias</div>
+                    <div id="wins" class="text-2xl font-bold text-green-400">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <div class="text-sm text-gray-400">Derrotas</div>
+                    <div id="losses" class="text-2xl font-bold text-red-400">0</div>
+                </div>
+                <div class="bg-gray-700 p-3 rounded-lg">
+                    <div class="text-sm text-gray-400">Empates</div>
+                    <div id="draws" class="text-2xl font-bold text-yellow-400">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Game state
+            let board = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'X';
+            let gameActive = true;
+            let playerSymbol = 'X';
+            let computerSymbol = 'O';
+            let difficulty = 'medium';
+            
+            // Statistics
+            let stats = {
+                wins: 0,
+                losses: 0,
+                draws: 0
+            };
+            
+            // DOM elements
+            const cells = document.querySelectorAll('.cell');
+            const messageEl = document.getElementById('message');
+            const playerSymbolEl = document.getElementById('player-symbol');
+            const computerSymbolEl = document.getElementById('computer-symbol');
+            const difficultySelect = document.getElementById('difficulty');
+            const playerRoleSelect = document.getElementById('player-role');
+            const resetBtn = document.getElementById('reset-btn');
+            const newGameBtn = document.getElementById('new-game-btn');
+            const winsEl = document.getElementById('wins');
+            const lossesEl = document.getElementById('losses');
+            const drawsEl = document.getElementById('draws');
+            
+            // Load stats from localStorage
+            loadStats();
+            
+            // Initialize game
+            initGame();
+            
+            // Event listeners
+            cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+            resetBtn.addEventListener('click', resetGame);
+            newGameBtn.addEventListener('click', newGame);
+            difficultySelect.addEventListener('change', updateDifficulty);
+            playerRoleSelect.addEventListener('change', updatePlayerRole);
+            
+            function initGame() {
+                board = ['', '', '', '', '', '', '', '', ''];
+                currentPlayer = 'X';
+                gameActive = true;
+                
+                // Update UI
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('winning-cell');
+                    cell.classList.remove('text-blue-400', 'text-green-400');
+                });
+                
+                messageEl.classList.add('hidden');
+                
+                // If computer goes first
+                if (playerSymbol === 'O') {
+                    setTimeout(computerMove, 500);
+                }
+            }
+            
+            function handleCellClick(e) {
+                const index = e.target.dataset.index;
+                
+                // Check if cell is empty and game is active
+                if (board[index] !== '' || !gameActive || currentPlayer !== playerSymbol) {
+                    return;
+                }
+                
+                // Make player move
+                makeMove(index, playerSymbol);
+                
+                // Check for win or draw
+                if (checkWin(playerSymbol)) {
+                    endGame(false);
+                    return;
+                }
+                
+                if (checkDraw()) {
+                    endGame(true);
+                    return;
+                }
+                
+                // Switch to computer
+                currentPlayer = computerSymbol;
+                setTimeout(computerMove, 500);
+            }
+            
+            function makeMove(index, symbol) {
+                board[index] = symbol;
+                const cell = cells[index];
+                cell.textContent = symbol;
+                cell.classList.add(symbol === 'X' ? 'text-blue-400' : 'text-green-400');
+            }
+            
+            function computerMove() {
+                if (!gameActive) return;
+                
+                let index;
+                
+                switch (difficulty) {
+                    case 'easy':
+                        index = getRandomMove();
+                        break;
+                    case 'medium':
+                        // 50% chance to make a smart move, 50% random
+                        index = Math.random() < 0.5 ? getSmartMove() : getRandomMove();
+                        break;
+                    case 'hard':
+                        index = getSmartMove();
+                        break;
+                    default:
+                        index = getRandomMove();
+                }
+                
+                makeMove(index, computerSymbol);
+                
+                // Check for win or draw
+                if (checkWin(computerSymbol)) {
+                    endGame(false);
+                    return;
+                }
+                
+                if (checkDraw()) {
+                    endGame(true);
+                    return;
+                }
+                
+                // Switch back to player
+                currentPlayer = playerSymbol;
+            }
+            
+            function getRandomMove() {
+                const emptyCells = board.map((cell, index) => cell === '' ? index : null).filter(val => val !== null);
+                return emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            }
+            
+            function getSmartMove() {
+                // Check for winning move
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = computerSymbol;
+                        if (checkWin(computerSymbol)) {
+                            board[i] = '';
+                            return i;
+                        }
+                        board[i] = '';
+                    }
+                }
+                
+                // Block player's winning move
+                for (let i = 0; i < 9; i++) {
+                    if (board[i] === '') {
+                        board[i] = playerSymbol;
+                        if (checkWin(playerSymbol)) {
+                            board[i] = '';
+                            return i;
+                        }
+                        board[i] = '';
+                    }
+                }
+                
+                // Take center if available
+                if (board[4] === '') return 4;
+                
+                // Take a corner if available
+                const corners = [0, 2, 6, 8];
+                const availableCorners = corners.filter(index => board[index] === '');
+                if (availableCorners.length > 0) {
+                    return availableCorners[Math.floor(Math.random() * availableCorners.length)];
+                }
+                
+                // Take any available edge
+                const edges = [1, 3, 5, 7];
+                const availableEdges = edges.filter(index => board[index] === '');
+                if (availableEdges.length > 0) {
+                    return availableEdges[Math.floor(Math.random() * availableEdges.length)];
+                }
+                
+                // Fallback to random (shouldn't happen)
+                return getRandomMove();
+            }
+            
+            function checkWin(symbol) {
+                const winPatterns = [
+                    [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                    [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                    [0, 4, 8], [2, 4, 6]             // diagonals
+                ];
+                
+                for (const pattern of winPatterns) {
+                    const [a, b, c] = pattern;
+                    if (board[a] === symbol && board[b] === symbol && board[c] === symbol) {
+                        // Highlight winning cells
+                        cells[a].classList.add('winning-cell');
+                        cells[b].classList.add('winning-cell');
+                        cells[c].classList.add('winning-cell');
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            
+            function checkDraw() {
+                return !board.includes('');
+            }
+            
+            function endGame(isDraw) {
+                gameActive = false;
+                
+                if (isDraw) {
+                    messageEl.textContent = 'Empate!';
+                    messageEl.className = 'text-center text-xl font-semibold mb-4 text-yellow-400 fade-in pulse';
+                    stats.draws++;
+                    drawsEl.textContent = stats.draws;
+                } else {
+                    if (currentPlayer === computerSymbol) {
+                        messageEl.textContent = 'Você perdeu!';
+                        messageEl.className = 'text-center text-xl font-semibold mb-4 text-red-400 fade-in pulse';
+                        stats.losses++;
+                        lossesEl.textContent = stats.losses;
+                    } else {
+                        messageEl.textContent = 'Você ganhou!';
+                        messageEl.className = 'text-center text-xl font-semibold mb-4 text-green-400 fade-in pulse';
+                        stats.wins++;
+                        winsEl.textContent = stats.wins;
+                    }
+                }
+                
+                messageEl.classList.remove('hidden');
+                saveStats();
+            }
+            
+            function resetGame() {
+                initGame();
+            }
+            
+            function newGame() {
+                // Reset stats
+                stats = { wins: 0, losses: 0, draws: 0 };
+                winsEl.textContent = '0';
+                lossesEl.textContent = '0';
+                drawsEl.textContent = '0';
+                saveStats();
+                
+                initGame();
+            }
+            
+            function updateDifficulty() {
+                difficulty = difficultySelect.value;
+            }
+            
+            function updatePlayerRole() {
+                playerSymbol = playerRoleSelect.value;
+                computerSymbol = playerSymbol === 'X' ? 'O' : 'X';
+                
+                playerSymbolEl.textContent = playerSymbol;
+                computerSymbolEl.textContent = computerSymbol;
+                
+                // Update colors
+                playerSymbolEl.className = `text-2xl font-bold ${playerSymbol === 'X' ? 'text-blue-400' : 'text-green-400'}`;
+                computerSymbolEl.className = `text-2xl font-bold ${computerSymbol === 'X' ? 'text-blue-400' : 'text-green-400'}`;
+                
+                initGame();
+            }
+            
+            function saveStats() {
+                localStorage.setItem('ticTacToeStats', JSON.stringify(stats));
+            }
+            
+            function loadStats() {
+                const savedStats = localStorage.getItem('ticTacToeStats');
+                if (savedStats) {
+                    stats = JSON.parse(savedStats);
+                    winsEl.textContent = stats.wins;
+                    lossesEl.textContent = stats.losses;
+                    drawsEl.textContent = stats.draws;
+                }
+            }
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=MARLONRGS/velha" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
